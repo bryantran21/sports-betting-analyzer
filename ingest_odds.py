@@ -23,8 +23,8 @@ def init_db():
             commence_time TEXT,
             bookmaker TEXT,
             market TEXT,
-            home_price REAL,
-            away_price REAL,
+            home_point REAL,
+            away_point REAL,
             timestamp TEXT
         )
     ''')
@@ -32,7 +32,8 @@ def init_db():
     conn.close()
 
 def fetch_and_save_odds():
-    url = f'https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds/?apiKey={API_KEY}&regions=us&markets=h2h'
+# Change markets=h2h to markets=spreads
+    url = f'https://api.the-odds-api.com/v4/sports/americanfootball_nfl/odds/?apiKey={API_KEY}&regions=us&markets=spreads'
     response = requests.get(url)
     
     if response.status_code == 200:
@@ -54,8 +55,8 @@ def fetch_and_save_odds():
                         game['commence_time'],
                         bookmaker['key'],
                         market['key'],
-                        outcomes[0]['price'],
-                        outcomes[1]['price'],
+                        outcomes[0].get('point'),
+                        outcomes[1].get('point'),
                         datetime.now().isoformat()
                     )
                     
