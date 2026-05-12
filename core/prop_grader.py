@@ -1,6 +1,34 @@
 import sqlite3
 import pandas as pd
 import joblib
+import nflreadpy as nfl
+
+def get_automated_injury_status(player_name):
+    """
+    Fetches the current week's injury report and returns the encoded status.
+    0: Healthy, 1: Questionable, 2: Doubtful/Out
+    """
+    try:
+        # Load injuries for the current season
+        df_injuries = nfl.load_injuries(seasons=[2026]).to_pandas()
+        
+        # Filter for the specific player
+        player_injury = df_injuries[df_injuries['full_name'].str.contains(player_name, case=False)]
+        
+        if player_injury.empty:
+            return 0  # Assume healthy if not on the report
+        
+        status = player_injury.iloc[0]['report_status']
+        
+        # Map to your model's expected inputs
+        mapping = {
+            'Questionable': 1,
+            'Doubtful': 2,
+            'Out': 2
+        }
+        return mapping.get(status, 0)
+    except Exception:
+        return 0 # Fallback to healthy on API error
 
 # We only import the model function if we are running this file directly
 # Otherwise, app.py handles the training to save memory
