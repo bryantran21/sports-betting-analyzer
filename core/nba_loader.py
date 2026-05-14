@@ -1,28 +1,22 @@
 from nba_api.stats.endpoints import playergamelog
 from nba_api.stats.static import players
 import pandas as pd
-import time
 
 def get_nba_player_stats(player_name):
-    # Find player ID
-    nba_player = [p for p in players.get_players() if p['full_name'].lower() == player_name.lower()]
+    # Find ID (Case-insensitive)
+    all_players = players.get_players()
+    nba_player = [p for p in all_players if p['full_name'].lower() == player_name.lower()]
+    
     if not nba_player:
         return pd.DataFrame()
     
-    player_id = nba_player[0]['id']
+    # timeout=30 helps prevent random hang-ups
+    log = playergamelog.PlayerGameLog(player_id=nba_player[0]['id'], season='2025-26', timeout=30)
+    df = log.get_data_frames()[0]
     
-    # Fetch game logs for the 2025-26 season
-    # Note: Using 2025-26 for current Finals context
-    gamelog = playergamelog.PlayerGameLog(player_id=player_id, season='2025-26')
-    df = gamelog.get_data_frames()[0]
-    
-    # Map NBA columns to your model's expected "Omni" names
-    df = df.rename(columns={
+    # Rename to match your Omni-Model's "Feature Names"
+    return df.rename(columns={
         'PTS': 'pts',
         'REB': 'reb',
-        'AST': 'ast',
-        'MATCHUP': 'opponent_team'
-    })
-    
-    # Return the most recent game for the 'prev_perf' feature
-    return df.head(1)
+        'AST': 'ast'
+    }).head(1)
